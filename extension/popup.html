@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FakeBuster</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 360px; min-height: 200px;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0a0a0f; color: #f0f0ff;
+    }
+    .header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 20px; border-bottom: 1px solid #2a2a3a;
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), transparent);
+    }
+    .logo { font-size: 18px; }
+    .title { font-size: 16px; font-weight: 700; }
+    .accent { color: #818cf8; }
+    .body { padding: 16px 20px; }
+    .label { font-size: 11px; color: #55556a; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .claim-box {
+      background: #1a1a24; border: 1px solid #2a2a3a;
+      border-radius: 10px; padding: 12px; font-size: 13px;
+      color: #c8c8e8; line-height: 1.5; margin-bottom: 14px;
+      max-height: 80px; overflow-y: auto;
+    }
+    .check-btn {
+      width: 100%; padding: 11px;
+      background: #6366f1; color: #fff; border: none;
+      border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .check-btn:hover { background: #818cf8; }
+    .check-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result { margin-top: 14px; }
+    .verdict {
+      font-size: 20px; font-weight: 800; margin-bottom: 8px;
+      padding: 10px 14px; border-radius: 8px;
+    }
+    .verdict-real { color: #22c55e; background: rgba(34,197,94,0.1); }
+    .verdict-fake { color: #ef4444; background: rgba(239,68,68,0.1); }
+    .verdict-misleading { color: #f59e0b; background: rgba(245,158,11,0.1); }
+    .verdict-unverified { color: #6b7280; background: rgba(107,114,128,0.1); }
+    .confidence { font-size: 12px; color: #9999bb; margin-bottom: 8px; }
+    .open-full {
+      display: block; text-align: center; margin-top: 12px;
+      padding: 8px; border: 1px solid #2a2a3a; border-radius: 8px;
+      color: #818cf8; font-size: 12px; text-decoration: none;
+      background: transparent; width: 100%; cursor: pointer;
+    }
+    .open-full:hover { background: rgba(99,102,241,0.1); }
+    .loading { text-align: center; padding: 20px; color: #6b7280; font-size: 13px; }
+    .spinner {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid #2a2a3a; border-top-color: #6366f1;
+      animation: spin 0.7s linear infinite; margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">🔍</span>
+    <span class="title">Fake<span class="accent">Buster</span></span>
+  </div>
+  <div class="body">
+    <div class="label">Claim to check</div>
+    <div class="claim-box" id="claimBox">Highlight text on any page and right-click → "Check with FakeBuster"</div>
+    <button class="check-btn" id="checkBtn">Check Claim</button>
+    <div class="result hidden" id="result">
+      <div class="verdict" id="verdictEl"></div>
+      <div class="confidence" id="confidenceEl"></div>
+    </div>
+    <button class="open-full" id="openFull">Open Full FakeBuster →</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

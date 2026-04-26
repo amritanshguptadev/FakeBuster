@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FakeBuster — AI Fact Checker</title>
+  <meta name="description" content="FakeBuster instantly checks if any claim, headline, or WhatsApp forward is Real, Fake, Misleading, or Unverified — with proof links and a confidence score." />
+  <meta property="og:title" content="FakeBuster — AI Fact Checker" />
+  <meta property="og:description" content="Bust fake news in seconds. Paste any claim and get a verdict with evidence." />
+  <meta property="og:type" content="website" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tesseract.js for OCR -->
+  <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <!-- html2canvas for share image -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">🔍</span>
+      <span class="brand-name">Fake<span class="accent">Buster</span></span>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-ghost" id="historyBtn" title="History">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+        History
+      </button>
+      <button class="btn-ghost" id="trendingBtn" title="Trending Fakes">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Trending
+      </button>
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">
+        <span class="theme-icon" id="themeIcon">🌙</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero" id="hero">
+    <div class="hero-bg-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        AI-Powered Fact Checking
+      </div>
+      <h1 class="hero-title">
+        Stop Fake News<br/>
+        <span class="gradient-text">Before It Spreads</span>
+      </h1>
+      <p class="hero-subtitle">Paste any claim, headline, or WhatsApp forward. Get an instant verdict with evidence, confidence score, and shareable proof.</p>
+    </div>
+  </header>
+
+  <!-- ===== MAIN APP ===== -->
+  <main class="main-container" id="mainApp">
+
+    <!-- INPUT SECTION -->
+    <section class="input-section" id="inputSection">
+      <div class="input-card">
+        <div class="input-header">
+          <h2 class="input-title">Check a Claim</h2>
+          <div class="input-modes">
+            <button class="mode-btn active" id="textModeBtn" data-mode="text" title="Type text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Text
+            </button>
+            <button class="mode-btn" id="imageModeBtn" data-mode="image" title="Upload screenshot">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Screenshot
+            </button>
+            <button class="mode-btn" id="voiceModeBtn" data-mode="voice" title="Voice input">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              Voice
+            </button>
+          </div>
+        </div>
+
+        <!-- TEXT INPUT -->
+        <div class="input-body" id="textInputBody">
+          <div class="textarea-wrapper">
+            <textarea
+              id="claimInput"
+              class="claim-textarea"
+              placeholder="Paste a claim, headline, or WhatsApp forward here…&#10;&#10;e.g., &quot;Drinking warm water kills coronavirus&quot;"
+              rows="5"
+              maxlength="2000"
+            ></textarea>
+            <div class="char-count"><span id="charCount">0</span>/2000</div>
+          </div>
+          <div class="lang-indicator" id="langIndicator">
+            <span class="lang-dot"></span>
+            <span id="langText">Detecting language…</span>
+          </div>
+        </div>
+
+        <!-- IMAGE INPUT -->
+        <div class="input-body hidden" id="imageInputBody">
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">📸</div>
+            <p class="upload-title">Drop a screenshot here</p>
+            <p class="upload-sub">or <label class="upload-link" for="fileInput">click to browse</label></p>
+            <input type="file" id="fileInput" accept="image/*" class="hidden" />
+          </div>
+          <div class="ocr-preview hidden" id="ocrPreview">
+            <img id="previewImg" alt="Uploaded screenshot" class="preview-img" />
+            <div class="ocr-result" id="ocrResult">
+              <div class="ocr-status">
+                <span class="spinner-sm" id="ocrSpinner"></span>
+                <span id="ocrStatus">Extracting text…</span>
+              </div>
+              <p class="ocr-text" id="ocrText"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- VOICE INPUT -->
+        <div class="input-body hidden" id="voiceInputBody">
+          <div class="voice-zone" id="voiceZone">
+            <button class="mic-btn" id="micBtn">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <p class="voice-status" id="voiceStatus">Click to start speaking</p>
+            <p class="voice-transcript" id="voiceTranscript"></p>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="input-actions">
+          <button class="btn-secondary" id="clearBtn">Clear</button>
+          <button class="btn-primary" id="checkBtn">
+            <span id="checkBtnText">Check Claim</span>
+            <span class="btn-spinner hidden" id="checkSpinner"></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULT SECTION -->
+    <section class="result-section hidden" id="resultSection">
+      <div class="result-card" id="resultCard">
+        <!-- Verdict -->
+        <div class="verdict-header" id="verdictHeader">
+          <div class="verdict-badge" id="verdictBadge">
+            <span class="verdict-icon" id="verdictIcon"></span>
+            <span class="verdict-label" id="verdictLabel"></span>
+          </div>
+          <div class="confidence-ring-wrapper">
+            <svg class="confidence-ring" viewBox="0 0 80 80">
+              <circle class="ring-bg" cx="40" cy="40" r="32" />
+              <circle class="ring-fill" id="ringFill" cx="40" cy="40" r="32" />
+            </svg>
+            <div class="confidence-text">
+              <span class="confidence-score" id="confidenceScore">0%</span>
+              <span class="confidence-label">confidence</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Claim displayed -->
+        <div class="checked-claim" id="checkedClaim"></div>
+
+        <!-- Claim Breakdown -->
+        <div class="breakdown-section" id="breakdownSection">
+          <h3 class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Claim Breakdown
+          </h3>
+          <div class="breakdown-list" id="breakdownList"></div>
+        </div>
+
+        <!-- Evidence Links -->
+        <div class="evidence-section" id="evidenceSection">
+          <h3 class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Evidence &amp; Sources
+          </h3>
+          <div class="evidence-list" id="evidenceList"></div>
+        </div>
+
+        <!-- Share button -->
+        <div class="result-actions">
+          <button class="btn-secondary" id="shareBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share as Image
+          </button>
+          <button class="btn-ghost" id="checkAnotherBtn">Check Another Claim</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHARE CARD (hidden, used for html2canvas) -->
+    <div class="share-card-template hidden" id="shareCardTemplate">
+      <div class="share-card-inner" id="shareCardInner">
+        <div class="share-logo">🔍 FakeBuster</div>
+        <div class="share-verdict" id="shareVerdict"></div>
+        <div class="share-claim-text" id="shareClaimText"></div>
+        <div class="share-confidence" id="shareConfidence"></div>
+        <div class="share-sources" id="shareSources"></div>
+        <div class="share-footer">fakebuster.app • Check claims before you share</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ===== HISTORY PANEL ===== -->
+  <aside class="side-panel" id="historyPanel">
+    <div class="panel-header">
+      <h2 class="panel-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+        History
+      </h2>
+      <button class="panel-close" id="historyClose">×</button>
+    </div>
+    <div class="panel-body" id="historyList">
+      <p class="panel-empty">No claims checked yet.</p>
+    </div>
+    <div class="panel-footer">
+      <button class="btn-danger-sm" id="clearHistoryBtn">Clear All</button>
+    </div>
+  </aside>
+
+  <!-- ===== TRENDING PANEL ===== -->
+  <aside class="side-panel" id="trendingPanel">
+    <div class="panel-header">
+      <h2 class="panel-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Trending Fakes
+      </h2>
+      <button class="panel-close" id="trendingClose">×</button>
+    </div>
+    <div class="panel-body" id="trendingList">
+      <div class="loading-shimmer">
+        <div class="shimmer-line"></div>
+        <div class="shimmer-line short"></div>
+        <div class="shimmer-line"></div>
+        <div class="shimmer-line short"></div>
+        <div class="shimmer-line"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- OVERLAY -->
+  <div class="overlay hidden" id="overlay"></div>
+
+  <!-- SCRIPTS -->
+  <script src="trust.js"></script>
+  <script src="history.js"></script>
+  <script src="trending.js"></script>
+  <script src="share.js"></script>
+  <script src="ocr.js"></script>
+  <script src="voice.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

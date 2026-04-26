@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "FakeBuster",
+  "version": "1.0.0",
+  "description": "Highlight any text on a webpage and instantly check if it's fake, real, or misleading — powered by FakeBuster AI.",
+  "permissions": ["contextMenus", "activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FakeBuster",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
