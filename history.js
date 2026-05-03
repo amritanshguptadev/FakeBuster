@@ -5,6 +5,13 @@
 const HISTORY_KEY = 'fakebuster_history';
 const MAX_HISTORY = 20;
 
+// escapeHtml — defined here as the authoritative copy
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(String(text)));
+  return div.innerHTML;
+}
+
 function getHistory() {
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
@@ -62,27 +69,25 @@ function loadHistoryItem(id) {
   const history = getHistory();
   const entry = history.find(h => h.id === id);
   if (!entry) return;
-  document.getElementById('claimInput').value = entry.claim;
-  document.getElementById('charCount').textContent = entry.claim.length;
-  closePanel('historyPanel');
-  // Switch to text mode
-  switchMode('text');
+
+  const claimInput = document.getElementById('claimInput');
+  if (claimInput) claimInput.value = entry.claim;
+  const charCount = document.getElementById('charCount');
+  if (charCount) charCount.textContent = entry.claim.length;
+
+  // Guard: functions may be defined in app.js (loads after)
+  if (typeof closePanel === 'function') closePanel('historyPanel');
+  if (typeof switchMode === 'function') switchMode('text');
 }
 
 function getVerdictClass(verdict) {
-  const map = { 'REAL': 'verdict-real', 'FAKE': 'verdict-fake', 'MISLEADING': 'verdict-misleading', 'UNVERIFIED': 'verdict-unverified' };
+  const map = { REAL: 'verdict-real', FAKE: 'verdict-fake', MISLEADING: 'verdict-misleading', UNVERIFIED: 'verdict-unverified' };
   return map[verdict] || 'verdict-unverified';
 }
 
 function getVerdictIcon(verdict) {
-  const map = { 'REAL': '✓', 'FAKE': '✗', 'MISLEADING': '⚠', 'UNVERIFIED': '?' };
+  const map = { REAL: '✓', FAKE: '✗', MISLEADING: '⚠', UNVERIFIED: '?' };
   return map[verdict] || '?';
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.appendChild(document.createTextNode(text));
-  return div.innerHTML;
 }
 
 // Init

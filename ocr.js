@@ -1,20 +1,43 @@
 // ============================================================
 // OCR MODULE — Tesseract.js browser-based image text extraction
+// Compatible with Tesseract.js v5
 // ============================================================
 
 let ocrWorker = null;
 
 async function initOCR() {
   if (ocrWorker) return ocrWorker;
-  ocrWorker = await Tesseract.createWorker('eng+hin', 1, {
-    logger: m => {
-      if (m.status === 'recognizing text') {
-        const pct = Math.round(m.progress * 100);
-        const statusEl = document.getElementById('ocrStatus');
-        if (statusEl) statusEl.textContent = `Reading text… ${pct}%`;
+  try {
+    // Tesseract.js v5: createWorker(lang, oem, options)
+    // oem 1 = LSTM only (faster, more accurate)
+    ocrWorker = await Tesseract.createWorker(['eng', 'hin'], 1, {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round(m.progress * 100);
+          const statusEl = document.getElementById('ocrStatus');
+          if (statusEl) statusEl.textContent = `Reading text… ${pct}%`;
+        } else if (m.status === 'loading tesseract core') {
+          const statusEl = document.getElementById('ocrStatus');
+          if (statusEl) statusEl.textContent = 'Loading OCR engine…';
+        } else if (m.status === 'loading language traineddata') {
+          const statusEl = document.getElementById('ocrStatus');
+          if (statusEl) statusEl.textContent = 'Loading language data…';
+        }
       }
-    }
-  });
+    });
+  } catch (err) {
+    console.error('Failed to init OCR worker:', err);
+    // Fallback: try English only
+    ocrWorker = await Tesseract.createWorker('eng', 1, {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round(m.progress * 100);
+          const statusEl = document.getElementById('ocrStatus');
+          if (statusEl) statusEl.textContent = `Reading text… ${pct}%`;
+        }
+      }
+    });
+  }
   return ocrWorker;
 }
 
@@ -39,7 +62,7 @@ async function runOCR(imageFile) {
   try {
     const worker = await initOCR();
     const { data } = await worker.recognize(imageFile);
-    const text = data.text.trim();
+    const text = (data.text || '').trim();
 
     if (!text) {
       ocrStatus.textContent = '⚠ No text found in image. Try a clearer screenshot.';
@@ -53,15 +76,20 @@ async function runOCR(imageFile) {
 
     // Auto-populate main textarea
     const textarea = document.getElementById('claimInput');
-    textarea.value = text;
-    document.getElementById('charCount').textContent = text.length;
-    detectLanguage(text);
+    if (textarea) {
+      textarea.value = text;
+      const charCount = document.getElementById('charCount');
+      if (charCount) charCount.textContent = text.length;
+      if (typeof detectLanguage === 'function') detectLanguage(text);
+    }
 
     return text;
   } catch (err) {
     console.error('OCR error:', err);
     ocrStatus.textContent = '✗ OCR failed. Please try again with a clearer image.';
     ocrSpinner.style.display = 'none';
+    // Reset worker so it can be re-initialized
+    ocrWorker = null;
     return null;
   }
 }
@@ -88,6 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
       runOCR(file);
+    } else {
+      if (typeof showToast === 'function') showToast('Please drop an image file.', 'error');
     }
   });
 

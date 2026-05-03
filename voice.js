@@ -2,19 +2,18 @@
 // VOICE INPUT MODULE — Web Speech API
 // ============================================================
 
+// Expose as globals so app.js can reference them
+window.recognition = null;
 let isListening = false;
-let recognition = null;
 
 function initVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    return null;
-  }
+  if (!SpeechRecognition) return null;
+
   const rec = new SpeechRecognition();
   rec.continuous = false;
   rec.interimResults = true;
   rec.maxAlternatives = 1;
-  // Will be set dynamically based on detected language
   rec.lang = 'en-IN';
   return rec;
 }
@@ -24,79 +23,83 @@ function startListening() {
   const voiceStatus = document.getElementById('voiceStatus');
   const voiceTranscript = document.getElementById('voiceTranscript');
 
-  if (!recognition) recognition = initVoice();
+  if (!window.recognition) window.recognition = initVoice();
 
-  if (!recognition) {
-    voiceStatus.textContent = '⚠ Voice input not supported in this browser. Try Chrome.';
+  if (!window.recognition) {
+    if (voiceStatus) voiceStatus.textContent = '⚠ Voice input not supported in this browser. Try Chrome.';
     return;
   }
 
   if (isListening) {
-    recognition.stop();
+    window.recognition.stop();
     return;
   }
 
   isListening = true;
-  micBtn.classList.add('listening');
-  voiceStatus.textContent = 'Listening… Speak your claim';
-  voiceTranscript.textContent = '';
+  if (micBtn) micBtn.classList.add('listening');
+  if (voiceStatus) voiceStatus.textContent = 'Listening… Speak your claim';
+  if (voiceTranscript) voiceTranscript.textContent = '';
 
-  recognition.onresult = (event) => {
-    let interim = '';
-    let final = '';
+  window.recognition.onresult = (event) => {
+    let interim = '', final = '';
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        final += transcript;
-      } else {
-        interim += transcript;
-      }
+      if (event.results[i].isFinal) final += transcript;
+      else interim += transcript;
     }
-    voiceTranscript.textContent = final || interim;
+    if (voiceTranscript) voiceTranscript.textContent = final || interim;
 
     if (final) {
       const textarea = document.getElementById('claimInput');
-      textarea.value = final;
-      document.getElementById('charCount').textContent = final.length;
-      detectLanguage(final);
+      if (textarea) textarea.value = final;
+      const charCount = document.getElementById('charCount');
+      if (charCount) charCount.textContent = final.length;
+      if (typeof detectLanguage === 'function') detectLanguage(final);
     }
   };
 
-  recognition.onerror = (event) => {
+  window.recognition.onerror = (event) => {
     console.error('Speech recognition error:', event.error);
-    voiceStatus.textContent = `⚠ Error: ${event.error}. Try again.`;
+    if (voiceStatus) voiceStatus.textContent = `⚠ Error: ${event.error}. Try again.`;
     stopListening();
   };
 
-  recognition.onend = () => {
+  window.recognition.onend = () => {
     stopListening();
-    const transcript = document.getElementById('voiceTranscript').textContent;
-    if (transcript) {
-      voiceStatus.textContent = '✓ Got it! You can now check this claim.';
-    } else {
-      voiceStatus.textContent = 'Click to start speaking';
+    const transcript = document.getElementById('voiceTranscript')?.textContent;
+    const voiceStatus = document.getElementById('voiceStatus');
+    if (voiceStatus) {
+      voiceStatus.textContent = transcript
+        ? '✓ Got it! You can now check this claim.'
+        : 'Click to start speaking';
     }
   };
 
-  recognition.start();
+  try {
+    window.recognition.start();
+  } catch (err) {
+    console.error('Recognition start error:', err);
+    stopListening();
+    if (voiceStatus) voiceStatus.textContent = '⚠ Could not start microphone. Try again.';
+  }
 }
 
 function stopListening() {
   isListening = false;
-  const micBtn = document.getElementById('micBtn');
-  micBtn?.classList.remove('listening');
+  document.getElementById('micBtn')?.classList.remove('listening');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   const micBtn = document.getElementById('micBtn');
   if (!micBtn) return;
 
-  // Check support
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    document.getElementById('voiceStatus').textContent = '⚠ Voice input not supported. Use Chrome or Edge.';
+    const voiceStatus = document.getElementById('voiceStatus');
+    if (voiceStatus) voiceStatus.textContent = '⚠ Voice input not supported. Use Chrome or Edge.';
     micBtn.disabled = true;
     micBtn.style.opacity = '0.4';
+    return;
   }
 
   micBtn.addEventListener('click', startListening);
